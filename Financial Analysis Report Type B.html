@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Dashboard (Premium Style)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js & Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+    <!-- Font & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #F8F9FA;
+            --header-bg: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); /* Deep Navy Gradient */
+            --card-bg: #FFFFFF;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --highlight-yellow: #FFF9C4;
+            --accent-blue: #3B82F6;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Scrollbar Styling - Thinner & Cleaner */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+
+        /* Header Styling */
+        .premium-header {
+            background: var(--header-bg);
+            height: 60px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Card Styling */
+        .premium-card {
+            background-color: var(--card-bg);
+            border-radius: 12px; /* Softer corners */
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .premium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .no-cursor {
+            cursor: default !important;
+            transform: none !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        /* Split View Layout */
+        .split-layout {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+        
+        .left-panel {
+            flex: 2;
+            background-color: #FFFFFF;
+            border-right: 1px solid #E2E8F0;
+            padding: 1.5rem;
+            overflow-y: auto;
+            min-width: 280px;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+
+        .right-panel {
+            flex: 7;
+            padding: 2rem;
+            overflow-y: auto;
+            background-color: #F8F9FA;
+        }
+
+        /* Table Styling - Clean & Spacious */
+        .fiori-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.9rem;
+            color: #374151;
+        }
+        .fiori-table th {
+            background-color: #F1F5F9;
+            color: #475569;
+            font-weight: 600;
+            padding: 14px 16px;
+            text-align: right;
+            border-bottom: 2px solid #E2E8F0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .fiori-table th:first-child { 
+            text-align: left; 
+            border-top-left-radius: 8px;
+        }
+        .fiori-table th:last-child { 
+            border-top-right-radius: 8px;
+        }
+        
+        .fiori-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #F1F5F9;
+            text-align: right;
+            transition: background-color 0.15s;
+        }
+        .fiori-table td:first-child { text-align: left; font-weight: 500; color: #111827; }
+        .fiori-table tr:hover td { background-color: #F8FAFC; }
+        
+        /* Highlighting Logic */
+        .highlight-cell {
+            background-color: #FEF08A !important; /* Soft Yellow */
+            color: #854D0E !important;
+            font-weight: 700 !important;
+        }
+        .highlight-row {
+            background-color: #FEF9C3 !important; /* Very Light Yellow */
+        }
+
+        /* Chart Containers */
+        .chart-container-summary {
+            position: relative;
+            height: 200px; 
+            width: 100%;
+        }
+
+        .chart-container-detail {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        /* Button Styling */
+        .tab-btn {
+            position: relative;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #2563EB;
+            transition: width 0.3s;
+        }
+        .tab-btn.active::after {
+            width: 100%;
+        }
+        .tab-btn:hover {
+            color: #1E40AF;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="premium-header flex items-center px-6 justify-between text-white z-50 relative">
+        <div class="flex items-center gap-4">
+            <button id="btn-home" class="hover:bg-white/10 p-2.5 rounded-full transition-colors duration-200" onclick="renderHome()">
+                <i class="fas fa-home text-lg opacity-90"></i>
+            </button>
+            <div class="flex flex-col">
+                <h1 class="text-xl font-bold tracking-tight text-white/95" id="page-title">CEO Dashboard</h1>
+                <span class="text-xs text-blue-200 font-medium tracking-wider uppercase">Executive Summary</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/10">
+            <i class="far fa-calendar-alt text-sm text-blue-200"></i>
+            <span class="text-sm font-medium tracking-wide">2025년 10월 기준</span>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main id="app-container" class="w-full h-full">
+        <!-- Content injected by JS -->
+    </main>
+
+    <script>
+        // --- 1. Data Definition ---
+        
+        const labelsCommon = ['22년', '23년', '24년', '25.08', '25.09', '25.10(현)', '10월계획'];
+        
+        // Colors for Gradients (Hex)
+        const colors = {
+            blue: '#3B82F6',
+            blueLight: '#93C5FD',
+            indigo: '#6366F1',
+            yellow: '#F59E0B',
+            yellowLight: '#FDE68A',
+            green: '#10B981',
+            greenLight: '#6EE7B7',
+            red: '#EF4444',
+            redLight: '#FCA5A5',
+            slate: '#64748B',
+            purple: '#8B5CF6'
+        };
+
+        const db = {
+            purchase: {
+                title: "구매 생산 현황",
+                id: "purchase",
+                items: [
+                    {
+                        title: "구매금액 (억원)",
+                        description: "수산물 제조 및 축육 유통 부문의 연도별/월별 구매 금액 추이입니다.",
+                        type: "bar",
+                        stacked: true,
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '수산물제조', data: [28.0, 28.6, 29.9, 31.9, 32.3, 24.1, null], colorName: 'blue' },
+                            { label: '축육유통', data: [31.8, 44.5, 41.3, 47.3, 43.9, 31.6, null], colorName: 'yellow' }
+                        ]
+                    },
+                    {
+                        title: "재고금액 (억원)",
+                        description: "기간별(3개월~1년 이상) 재고 자산의 보유 현황을 보여줍니다.",
+                        type: "bar",
+                        stacked: true,
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '3개월 경과', data: [28.0, 28.6, 29.9, 31.9, 32.3, 24.1, null], colorName: 'green' },
+                            { label: '6개월 경과', data: [28.0, 28.6, 29.9, 31.9, 32.3, 24.1, null], colorName: 'yellow' },
+                            { label: '9개월 경과', data: [28.0, 28.6, 29.9, 31.9, 32.3, 24.1, null], colorName: 'yellow' }, // Adjusted for visual harmony
+                            { label: '12개월 경과', data: [28.0, 28.6, 29.9, 31.9, 32.3, 24.1, null], colorName: 'red' },
+                            { label: '1년초과', data: [28.0, 28.6, 29.9, 31.9, 32.3, 24.1, null], colorName: 'red' }
+                        ]
+                    },
+                    {
+                        title: "생산지표 - 소시지 (KG)",
+                        description: "소시지 품목의 생산량과 공장 가동율(%) 추이입니다.",
+                        type: "line_mixed",
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '생산수량', type: 'bar', data: [4346, 4386, 4718, 4718, 446, 1595, null], colorName: 'blue', yAxisID: 'y' },
+                            { label: '가동율(%)', type: 'line', data: [60, 78, 64, 64, 73, 74, null], colorName: 'red', yAxisID: 'y1' }
+                        ]
+                    },
+                     {
+                        title: "생산지표 - 골뱅이 (CAN)",
+                        description: "골뱅이 품목의 생산 수량과 공장 가동율(%) 변화입니다.",
+                        type: "line_mixed",
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '생산수량', type: 'bar', data: [908, 1119, 1342, 1342, 103, 116, null], colorName: 'blue', yAxisID: 'y' },
+                            { label: '가동율(%)', type: 'line', data: [31, 49, 45, 45, 85, 93, null], colorName: 'red', yAxisID: 'y1' }
+                        ]
+                    },
+                    {
+                        title: "제조원가율 (억원/%)",
+                        description: "전체 생산액 대비 제조 원가가 차지하는 비율의 추이입니다.",
+                        type: "line_mixed",
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '생산액', type: 'bar', data: [300.1, 313.0, 327.9, 30.2, 31.4, 59.36, null], colorName: 'slate', yAxisID: 'y' },
+                            { label: '제조원가율(%)', type: 'line', data: [79.6, 78.1, 77.7, 77.4, 75.3, 70.2, null], colorName: 'red', yAxisID: 'y1' }
+                        ]
+                    }
+                ]
+            },
+            sales: {
+                title: "판매 현황",
+                id: "sales",
+                items: [
+                    {
+                        title: "매출액 (억원)",
+                        description: "수산물 및 축육 유통 부문의 매출 실적 현황입니다.",
+                        type: "bar",
+                        stacked: true,
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '수산물제조', data: [28.0, 28.6, 29.9, 31.9, 32.3, 24.1, null], colorName: 'blue' },
+                            { label: '축육유통', data: [31.8, 44.5, 41.3, 47.3, 43.9, 31.6, null], colorName: 'yellow' }
+                        ]
+                    },
+                    {
+                        title: "이익율 추이 (%)",
+                        description: "매출총이익율과 영업이익율의 기간별 수익성 지표입니다.",
+                        type: "line",
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '매출총이익율', data: [8.54, 7.82, 8.54, 8.60, 9.96, -26.56, null], colorName: 'blue' },
+                            { label: '영업이익율', data: [1.24, 0.33, 0.01, 0.63, 1.63, -30.29, null], colorName: 'red' }
+                        ]
+                    },
+                    {
+                        title: "시장 점유율 - 소시지 (%)",
+                        description: "소시지 품목에 대한 자사 및 경쟁사의 시장 점유율 비교입니다.",
+                        type: "line",
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '자사(소시지)', data: [35, 36, 39, 39, 39, 39, null], colorName: 'red' },
+                            { label: '경쟁사(소시지)', data: [65, 64, 61, 61, 61, 61, null], colorName: 'slate', borderDash: [5, 5] }
+                        ]
+                    },
+                    {
+                        title: "시장 점유율 - 축육 (%)",
+                        description: "축육 유통 시장에서의 자사 및 경쟁사 점유율 비교입니다.",
+                        type: "line",
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '자사(축육)', data: [1, 1, 1, 1, 1, 1, null], colorName: 'red' },
+                            { label: '경쟁사(축육)', data: [99, 99, 99, 99, 99, 99, null], colorName: 'slate', borderDash: [5, 5] }
+                        ]
+                    }
+                ]
+            },
+            fund: {
+                title: "자금 현황",
+                id: "fund",
+                items: [
+                    {
+                        title: "현금성자산 (억원)",
+                        description: "보유 중인 현금 및 현금성 자산의 월별 잔액 추이입니다.",
+                        type: "bar",
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '현금성자산', data: [27.4, 21.5, 20.5, 32.9, 38.4, 88.6, null], colorName: 'blue' }
+                        ]
+                    },
+                    {
+                        title: "유동성 (부채) (억원)",
+                        description: "매입채무, 단기차입금 등 주요 유동성 부채의 구성 현황입니다.",
+                        type: "bar",
+                        stacked: true,
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '매입채무', data: [18.0, 22.7, 35.7, 26.3, 26.3, 90.9, null], colorName: 'yellow' },
+                            { label: '단기차입금', data: [196.5, 168.9, 88.8, 214.3, 214.3, 214.3, null], colorName: 'red' },
+                            { label: '장기차입금', data: [40.9, 80.7, 106.1, 31.5, 30.8, 31.5, null], colorName: 'slate' },
+                            { label: '기타비유동부채', data: [2.5, 23.7, 26.8, 19.8, 15.7, 24.7, null], colorName: 'purple' }
+                        ]
+                    },
+                    {
+                        title: "현금흐름 (억원)",
+                        description: "영업, 투자, 재무 활동별 현금 유입 및 유출 현황입니다.",
+                        type: "bar",
+                        stacked: true,
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '영업활동', data: [122.0, 122.0, 122.0, 122.0, 122.0, 122.0, null], colorName: 'green' },
+                            { label: '투자활동', data: [1.1, 1.1, 1.1, 1.1, 1.1, 1.1, null], colorName: 'yellow' },
+                            { label: '재무활동', data: [60.0, 60.0, 60.0, 60.0, 60.0, 60.0, null], colorName: 'blue' }
+                        ],
+                        hasDetailTabs: true,
+                        detailData: {
+                            summary: [
+                                { item: '영업활동', val: 12196409369 },
+                                { item: '투자활동', val: 110394610 },
+                                { item: '재무활동', val: 6000000000 },
+                                { item: '현금증감', val: 18306803979 }
+                            ]
+                        }
+                    }
+                ]
+            },
+            finance: {
+                title: "재무 및 주가 현황",
+                id: "finance",
+                items: [
+                    {
+                        title: "재무상태표 (억원)",
+                        description: "자산, 부채, 자본 총계의 변화를 통한 재무 건전성 지표입니다.",
+                        type: "bar",
+                        stacked: true,
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '자산', data: [477.8, 493.5, 458.6, 498.3, 490.1, 695.7, null], colorName: 'green' },
+                            { label: '부채', data: [299.8, 317.7, 285.0, 341.0, 332.5, 566.2, null], colorName: 'red' },
+                            { label: '자본', data: [177.9, 175.8, 173.6, 157.3, 157.6, 129.6, null], colorName: 'slate' }
+                        ]
+                    },
+                    {
+                        title: "재고자산 구성 (억원)",
+                        description: "상품, 제품, 원재료 등 재고 자산의 세부 구성 내역입니다.",
+                        type: "bar",
+                        stacked: true,
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '상품', data: [106.58, 115.72, 25.4, 75.0, 44.2, 47.5, null], colorName: 'blue' },
+                            { label: '원재료', data: [62.96, 32.46, 50.8, 53.7, 58.5, 56.8, null], colorName: 'indigo' },
+                            { label: '제품', data: [5.65, 5.42, 10.4, 7.9, 8.2, 32.7, null], colorName: 'blueLight' },
+                            { label: '재공품', data: [2.46, 2.42, 1.0, 4.2, 4.6, 2.0, null], colorName: 'yellow' },
+                            { label: '부재료', data: [7.02, 6.63, 7.7, 5.8, 5.6, 8.2, null], colorName: 'yellowLight' }
+                        ]
+                    },
+                    {
+                        title: "회전율 (회)",
+                        description: "매출채권, 재고자산, 매입채무의 회전율을 통한 활동성 지표입니다.",
+                        type: "line",
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '매출채권회전율', data: [24.1, 35.8, 40.7, 17.8, 15.4, 9.5, null], colorName: 'blue' },
+                            { label: '재고자산회전율', data: [4.0, 4.1, 4.2, 2.5, 3.2, 3.4, null], colorName: 'green' },
+                            { label: '매입채무회전율', data: [15.0, 23.8, 22.2, 15.3, 20.9, 10.3, null], colorName: 'yellow' }
+                        ]
+                    },
+                    {
+                        title: "투자지표 (주가/PER)",
+                        description: "주가 변동 추이와 주가수익비율(PER) 등 투자 관련 지표입니다.",
+                        type: "line_mixed",
+                        labels: labelsCommon,
+                        datasets: [
+                            { label: '주가', type: 'line', data: [5580, 5580, 5580, 5580, 5580, 5580, 5580], colorName: 'blue', yAxisID: 'y' },
+                            { label: 'PER', type: 'bar', data: [186, 186, 186, 186, 186, 186, 186], colorName: 'slate', yAxisID: 'y1' }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        // --- 2. Chart Configurations ---
+
+        Chart.register(ChartDataLabels);
+        Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
+        Chart.defaults.color = '#64748B'; // Slate 500
+        Chart.defaults.scale.grid.color = '#F1F5F9'; // Very light slate grid
+        Chart.defaults.scale.grid.borderDash = [3, 3];
+        
+        const formatNumber = (val) => {
+            if(val === null || val === undefined) return '-';
+            return val.toLocaleString();
+        };
+
+        // Helper to get color/gradient
+        const getChartColor = (ctx, colorName, isBg = true) => {
+            const baseColor = colors[colorName] || colors.slate;
+            if (!isBg) return baseColor; // Border color usually solid
+
+            // Create gradient for background
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, baseColor);
+            gradient.addColorStop(1, '#FFFFFF'); // Fade to white
+            
+            // For simple stacked/bar looks, solid might be better or a subtle gradient
+            // Let's use a solid color with opacity for consistency in stacked bars, or gradient for single bars
+            return baseColor;
+        };
+
+        const createChart = (canvasId, config, isDetail = false) => {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            // Map datasets to chart.js format with styles
+            const datasets = config.datasets.map(ds => {
+                const colorHex = colors[ds.colorName] || '#94a3b8';
+                const isLine = config.type === 'line' || ds.type === 'line'; // Check both config and dataset type
+                
+                // Create Gradient
+                let bgColor = colorHex;
+                if(!isLine) {
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                    gradient.addColorStop(0, colorHex);
+                    gradient.addColorStop(1, adjustBrightness(colorHex, 20)); // Slightly lighter
+                    bgColor = gradient;
+                }
+
+                return {
+                    ...ds,
+                    backgroundColor: isLine ? colorHex : bgColor,
+                    borderColor: colorHex,
+                    borderWidth: isLine ? 3 : 0,
+                    pointBackgroundColor: '#FFFFFF',
+                    pointBorderColor: colorHex,
+                    pointBorderWidth: 2,
+                    pointRadius: isDetail ? 4 : 2,
+                    pointHoverRadius: 6,
+                    fill: false,
+                    tension: 0.4, // Smooth curves
+                    borderRadius: 4, // Rounded bars
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.8
+                };
+            });
+
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { 
+                            usePointStyle: true,
+                            boxWidth: 8, 
+                            padding: 20, 
+                            font: { size: 12, weight: 500 } 
+                        }
+                    },
+                    datalabels: {
+                        display: true,
+                        color: (context) => {
+                            // Logic to hide label if value is null or too small relative to scale could go here
+                            return '#475569'; // Dark slate for better contrast on bars/lines
+                        },
+                        anchor: 'center', // Changed for cleaner look inside bar
+                        align: 'center',
+                        font: { weight: '600', size: isDetail ? 11 : 0 }, // Hide labels in summary view
+                        formatter: (value, context) => {
+                            if (value === null || value === 0) return '';
+                            // Only show top 2 or significant values in complex charts if needed
+                            return Math.round(value).toLocaleString();
+                        },
+                        backgroundColor: 'rgba(255,255,255,0.7)',
+                        borderRadius: 4,
+                        padding: { top: 2, bottom: 2, left: 4, right: 4 }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)', // Dark background
+                        titleColor: '#F8FAFC',
+                        bodyColor: '#E2E8F0',
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        boxPadding: 4
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11 }, color: '#64748B' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        border: { display: false }, // No axis line
+                        grid: { color: '#F1F5F9' },
+                        title: { display: isDetail, text: config.title.includes('%') ? '%' : '단위: 억/수량', font: {size: 11} }
+                    }
+                },
+                onClick: (e, elements) => {
+                    if (isDetail && elements.length > 0) {
+                        const element = elements[0];
+                        const datasetIndex = element.datasetIndex; // Row Index
+                        const index = element.index; // Column Index
+                        highlightTableCells(datasetIndex, index);
+                    }
+                }
+            };
+
+            // Mixed Chart Y-Axis handling
+            if (config.type === 'line_mixed') {
+                options.scales.y1 = {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    title: { display: true, text: '보조축' },
+                    border: { display: false }
+                };
+            }
+
+            return new Chart(ctx, {
+                type: config.type === 'line_mixed' ? 'bar' : config.type,
+                data: {
+                    labels: config.labels,
+                    datasets: datasets
+                },
+                options: options
+            });
+        };
+        
+        // Utility to lighten color for gradients
+        function adjustBrightness(col, amt) {
+            var usePound = false;
+            if (col[0] == "#") {
+                col = col.slice(1);
+                usePound = true;
+            }
+            var num = parseInt(col,16);
+            var r = (num >> 16) + amt;
+            if (r > 255) r = 255;
+            else if  (r < 0) r = 0;
+            var b = ((num >> 8) & 0x00FF) + amt;
+            if (b > 255) b = 255;
+            else if  (b < 0) b = 0;
+            var g = (num & 0x0000FF) + amt;
+            if (g > 255) g = 255;
+            else if (g < 0) g = 0;
+            return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16);
+        }
+
+
+        // --- 3. Rendering Logic ---
+
+        const appContainer = document.getElementById('app-container');
+        const pageTitle = document.getElementById('page-title');
+        let currentCharts = [];
+
+        function renderHome() {
+            // Clear current content
+            appContainer.innerHTML = '';
+            pageTitle.innerText = 'CEO Dashboard';
+            currentCharts.forEach(c => c.destroy());
+            currentCharts = [];
+
+            // Grid Layout
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 p-8 max-w-7xl mx-auto';
+
+            Object.values(db).forEach(section => {
+                const card = document.createElement('div');
+                card.className = 'premium-card p-6 flex flex-col h-96 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group';
+                card.onclick = () => renderDetail(section.id);
+
+                const header = document.createElement('div');
+                header.className = 'flex justify-between items-center mb-3 pb-2 border-b border-gray-100';
+                header.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <div class="w-1 h-5 bg-blue-500 rounded-full"></div>
+                        <h2 class="text-lg font-bold text-gray-800">${section.title}</h2>
+                    </div>
+                    <i class="fas fa-arrow-right text-gray-300 group-hover:text-blue-500 transition-colors"></i>
+                `;
+                card.appendChild(header);
+
+                // Add Description for Home View
+                const desc = document.createElement('p');
+                desc.className = 'text-sm text-gray-500 mb-4 h-10 line-clamp-2 leading-relaxed';
+                desc.innerText = section.items[0].description || '주요 지표 요약 정보입니다.';
+                card.appendChild(desc);
+
+                const body = document.createElement('div');
+                body.className = 'flex-1 chart-container-summary w-full';
+                const canvasId = `chart-home-${section.id}`;
+                body.innerHTML = `<canvas id="${canvasId}"></canvas>`;
+                card.appendChild(body);
+
+                grid.appendChild(card);
+            });
+
+            appContainer.appendChild(grid);
+
+            // Render Preview Charts
+            setTimeout(() => {
+                Object.values(db).forEach(section => {
+                    const item = section.items[0];
+                    const chart = createChart(`chart-home-${section.id}`, item, false);
+                    currentCharts.push(chart);
+                });
+            }, 50);
+        }
+
+        function renderDetail(sectionId) {
+            appContainer.innerHTML = '';
+            const section = db[sectionId];
+            pageTitle.innerText = `${section.title} 상세`;
+            currentCharts.forEach(c => c.destroy());
+            currentCharts = [];
+
+            // Split Layout
+            const layout = document.createElement('div');
+            layout.className = 'split-layout';
+
+            // Left Panel (Thumbnails)
+            const leftPanel = document.createElement('div');
+            leftPanel.className = 'left-panel space-y-6';
+            
+            section.items.forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = `premium-card p-4 transition-all duration-300 flex flex-col ${idx === 0 ? 'ring-2 ring-blue-500 shadow-md' : 'opacity-80 hover:opacity-100'}`;
+                card.dataset.idx = idx;
+                card.onclick = (e) => switchMainDetail(sectionId, idx);
+                
+                const title = document.createElement('h3');
+                title.className = 'text-xs font-bold uppercase text-gray-500 mb-1 tracking-wider';
+                title.innerText = item.title;
+                card.appendChild(title);
+
+                // Add Description
+                const desc = document.createElement('p');
+                desc.className = 'text-[11px] text-gray-400 mb-2 leading-snug line-clamp-2';
+                desc.innerText = item.description || '';
+                card.appendChild(desc);
+
+                const div = document.createElement('div');
+                div.style.height = '100px';
+                div.innerHTML = `<canvas id="chart-left-${idx}"></canvas>`;
+                card.appendChild(div);
+
+                leftPanel.appendChild(card);
+            });
+
+            // Right Panel (Main Detail)
+            const rightPanel = document.createElement('div');
+            rightPanel.className = 'right-panel flex flex-col gap-8';
+            rightPanel.id = 'right-panel';
+
+            layout.appendChild(leftPanel);
+            layout.appendChild(rightPanel);
+            appContainer.appendChild(layout);
+
+            // Render Left Charts
+            setTimeout(() => {
+                section.items.forEach((item, idx) => {
+                    const chart = createChart(`chart-left-${idx}`, item, false);
+                    chart.options.scales.x.display = false;
+                    chart.options.scales.y.display = false;
+                    chart.options.plugins.legend.display = false;
+                    chart.options.plugins.datalabels.display = false;
+                    chart.update();
+                    currentCharts.push(chart);
+                });
+                
+                // Render Initial Main View
+                renderMainContent(sectionId, 0);
+            }, 50);
+        }
+
+        let mainChartInstance = null;
+
+        function switchMainDetail(sectionId, idx) {
+            document.querySelectorAll('.left-panel .premium-card').forEach(c => {
+                c.classList.remove('ring-2', 'ring-blue-500', 'shadow-md', 'opacity-100');
+                c.classList.add('opacity-80');
+            });
+            const activeCard = document.querySelector(`.left-panel .premium-card[data-idx="${idx}"]`);
+            activeCard.classList.add('ring-2', 'ring-blue-500', 'shadow-md', 'opacity-100');
+            activeCard.classList.remove('opacity-80');
+            
+            renderMainContent(sectionId, idx);
+        }
+
+        function renderMainContent(sectionId, idx) {
+            const container = document.getElementById('right-panel');
+            container.innerHTML = '';
+            
+            const item = db[sectionId].items[idx];
+
+            // 1. Chart Section
+            const chartCard = document.createElement('div');
+            chartCard.className = 'premium-card p-8 no-cursor bg-white';
+            
+            const title = document.createElement('div');
+            title.className = 'flex justify-between items-start mb-6 border-b border-gray-100 pb-4';
+            title.innerHTML = `
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-1">${item.title}</h2>
+                    <p class="text-sm text-gray-500">${item.description || '상세 데이터 분석'}</p>
+                </div>
+                <span class="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full flex items-center mt-1">
+                    <i class="fas fa-mouse-pointer mr-1.5"></i>요소 클릭 시 데이터 강조
+                </span>
+            `;
+            chartCard.appendChild(title);
+
+            const canvasDiv = document.createElement('div');
+            canvasDiv.className = 'chart-container-detail';
+            canvasDiv.innerHTML = `<canvas id="main-chart"></canvas>`;
+            chartCard.appendChild(canvasDiv);
+
+            container.appendChild(chartCard);
+
+            // 2. Table Section
+            const tableCard = document.createElement('div');
+            tableCard.className = 'premium-card p-0 no-cursor overflow-hidden bg-white mt-4';
+            
+            const tableContainer = document.createElement('div');
+            tableContainer.className = 'p-6 overflow-x-auto';
+            
+            if(item.hasDetailTabs) {
+                renderCashFlowTabs(tableContainer, item);
+            } else {
+                renderStandardTable(tableContainer, item);
+            }
+            tableCard.appendChild(tableContainer);
+            container.appendChild(tableCard);
+
+            if (mainChartInstance) mainChartInstance.destroy();
+            setTimeout(() => {
+                mainChartInstance = createChart('main-chart', item, true);
+            }, 0);
+        }
+
+        function renderStandardTable(container, item) {
+            let html = `<table class="fiori-table" id="detail-table"><thead><tr><th class="rounded-tl-lg">구분</th>`;
+            
+            const colSums = new Array(item.labels.length).fill(0);
+            
+            // Header
+            item.labels.forEach((lbl, i) => html += `<th class="col-${i} ${i === item.labels.length -1 ? 'rounded-tr-lg' : ''}">${lbl}</th>`);
+            html += `</tr></thead><tbody>`;
+
+            // Total Row (Top)
+            item.datasets.forEach(ds => {
+                ds.data.forEach((val, i) => {
+                    if (val !== null && typeof val === 'number') colSums[i] += val;
+                });
+            });
+
+            html += `<tr class="bg-blue-50/50 font-bold text-blue-900">
+                <td class="pl-6">합계</td>`;
+            colSums.forEach((sum, i) => {
+                html += `<td class="col-${i} font-bold">${formatNumber(sum)}</td>`;
+            });
+            html += `</tr>`;
+
+            // Data Rows
+            item.datasets.forEach((ds, rIdx) => {
+                html += `<tr id="row-${rIdx}" class="group transition-colors"><td class="pl-6 font-medium text-gray-700">${ds.label}</td>`;
+                ds.data.forEach((val, cIdx) => {
+                     html += `<td class="col-${cIdx} text-gray-600">${formatNumber(val)}</td>`;
+                });
+                html += `</tr>`;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        // Special logic for Cash Flow which requires Tab view and GL list
+        function renderCashFlowTabs(container, item) {
+            let currentTab = 'direct';
+
+            const updateView = () => {
+                container.innerHTML = '';
+
+                // Header
+                const tabHeader = document.createElement('div');
+                tabHeader.className = 'flex border-b border-gray-200 mb-6 gap-6';
+                
+                const btnClassActive = "tab-btn active pb-3 text-blue-600 border-blue-600";
+                const btnClassInactive = "tab-btn pb-3 text-gray-400 hover:text-gray-600";
+
+                const btnDirect = document.createElement('button');
+                btnDirect.className = currentTab === 'direct' ? btnClassActive : btnClassInactive;
+                btnDirect.innerHTML = `<i class="fas fa-file-invoice-dollar mr-2"></i>현금흐름표 (직접법)`;
+                btnDirect.onclick = () => { currentTab = 'direct'; updateView(); };
+
+                const btnIndirect = document.createElement('button');
+                btnIndirect.className = currentTab === 'indirect' ? btnClassActive : btnClassInactive;
+                btnIndirect.innerHTML = `<i class="fas fa-chart-line mr-2"></i>현금흐름표 (간접법)`;
+                btnIndirect.onclick = () => { currentTab = 'indirect'; updateView(); };
+
+                tabHeader.appendChild(btnDirect);
+                tabHeader.appendChild(btnIndirect);
+                container.appendChild(tabHeader);
+
+                // Content
+                const contentDiv = document.createElement('div');
+                contentDiv.className = "animate-fade-in";
+                
+                if (currentTab === 'direct') {
+                    contentDiv.innerHTML = `
+                        <div class="mb-8">
+                            <h4 class="font-bold mb-4 text-sm text-gray-500 uppercase tracking-wider">1. 현금흐름 요약 (25년 10월 현재)</h4>
+                            <div class="rounded-lg border border-gray-200 overflow-hidden">
+                                <table class="fiori-table">
+                                    <thead><tr><th>항목</th><th>금액 (원)</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>영업활동</td><td class="font-medium">12,196,409,369</td></tr>
+                                        <tr><td>투자활동</td><td class="font-medium">110,394,610</td></tr>
+                                        <tr><td>재무활동</td><td class="font-medium">6,000,000,000</td></tr>
+                                        <tr class="bg-yellow-50"><td class="font-bold text-yellow-900">현금증감</td><td class="font-bold text-yellow-900">18,306,803,979</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-bold mb-4 text-sm text-gray-500 uppercase tracking-wider">2. 주요 입출금 내역 (직접법 상세)</h4>
+                            <div class="rounded-lg border border-gray-200 overflow-hidden" style="max-height: 400px; overflow-y:auto;">
+                                <table class="fiori-table text-xs">
+                                    <thead class="bg-gray-50 sticky top-0"><tr><th>GL계정</th><th>금액</th><th>구분</th><th>활동</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>하나 보통예금-KRW</td><td class="text-red-500 font-medium">-38,000,000</td><td>출금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>하나 보통예금-KRW(부산)</td><td class="text-blue-600 font-medium">1,000,000</td><td>입금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>하나 보통예금-KRW</td><td class="text-red-500 font-medium">-765,331</td><td>출금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>하나 보통예금-KRW</td><td class="text-red-500 font-medium">-552,880</td><td>출금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>하나 외화예금-USD</td><td class="text-red-500 font-medium">-1,423,200</td><td>출금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>하나 보통예금-KRW</td><td class="text-blue-600 font-medium">110,394,610</td><td>입금</td><td><span class="px-2 py-1 rounded bg-yellow-100 text-yellow-700 text-[10px]">투자</span></td></tr>
+                                        <tr><td>하나 보통예금-KRW</td><td class="text-blue-600 font-medium">6,000,000,000</td><td>입금</td><td><span class="px-2 py-1 rounded bg-blue-100 text-blue-700 text-[10px]">재무</span></td></tr>
+                                        <tr><td>현금(부산공장)</td><td class="text-blue-600 font-medium">500,000</td><td>입금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>하나 보통예금-KRW(부산)</td><td class="text-red-500 font-medium">-500,000</td><td>출금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>현금(본사)</td><td class="text-blue-600 font-medium">2,000,000</td><td>입금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>하나 보통예금-KRW</td><td class="text-blue-600 font-medium">50,000,000</td><td>입금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>하나 보통예금-KRW</td><td class="text-blue-600 font-medium">135,726,402</td><td>입금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>하나 보통예금-KRW</td><td class="text-blue-600 font-medium">909,626,725</td><td>입금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>하나 보통예금-KRW</td><td class="text-blue-600 font-medium">147,000,000</td><td>입금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>냉동냉장수협 보통예금</td><td class="text-blue-600 font-medium">500,000,000</td><td>입금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td>신한 보통예금-KRW</td><td class="text-blue-600 font-medium">1,000,000,000</td><td>입금</td><td><span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px]">영업</span></td></tr>
+                                        <tr><td colspan="4" class="text-center text-gray-400 py-3 italic bg-gray-50 border-t">... (이하 데이터 생략) ...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Indirect Method Content
+                    contentDiv.innerHTML = `
+                        <h4 class="font-bold mb-4 text-sm text-gray-500 uppercase tracking-wider">현금흐름표 (간접법) - 2025년 10월</h4>
+                        <div class="rounded-lg border border-gray-200 overflow-hidden">
+                            <table class="fiori-table">
+                                <thead>
+                                    <tr>
+                                        <th>과목</th>
+                                        <th>금액 (원)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="font-bold bg-gray-50"><td>I. 영업활동으로 인한 현금흐름</td><td class="text-blue-600">12,196,409,369</td></tr>
+                                    <tr><td class="pl-4 border-l-4 border-transparent hover:border-blue-200">1. 당기순이익</td><td>223,403,946</td></tr>
+                                    <tr><td class="pl-4 border-l-4 border-transparent hover:border-blue-200">2. 현금유출이 없는 비용 등의 가산</td><td>8,450,000,000</td></tr>
+                                    <tr><td class="pl-8 text-gray-500 text-xs">- 감가상각비</td><td class="text-gray-500 text-xs">2,943,210,000</td></tr>
+                                    <tr><td class="pl-8 text-gray-500 text-xs">- 퇴직급여</td><td class="text-gray-500 text-xs">4,431,365,995</td></tr>
+                                    <tr><td class="pl-8 text-gray-500 text-xs">- 기타</td><td class="text-gray-500 text-xs">1,075,424,005</td></tr>
+                                    <tr><td class="pl-4 border-l-4 border-transparent hover:border-blue-200">3. 현금유입이 없는 수익 등의 차감</td><td class="text-red-500">-500,000,000</td></tr>
+                                    <tr><td class="pl-4 border-l-4 border-transparent hover:border-blue-200">4. 영업활동으로 인한 자산부채의 변동</td><td>4,023,005,423</td></tr>
+                                    <tr><td class="pl-8 text-gray-500 text-xs">- 매출채권의 감소</td><td class="text-gray-500 text-xs">5,671,638,902</td></tr>
+                                    <tr><td class="pl-8 text-gray-500 text-xs">- 재고자산의 감소</td><td class="text-gray-500 text-xs">-1,500,000,000</td></tr>
+                                    <tr><td class="pl-8 text-gray-500 text-xs">- 매입채무의 증가</td><td class="text-gray-500 text-xs">2,131,565,349</td></tr>
+                                    
+                                    <tr class="font-bold bg-gray-50"><td>II. 투자활동으로 인한 현금흐름</td><td class="text-blue-600">110,394,610</td></tr>
+                                    <tr><td class="pl-4 border-l-4 border-transparent hover:border-blue-200">1. 투자자산의 처분</td><td>110,394,610</td></tr>
+                                    <tr><td class="pl-4 border-l-4 border-transparent hover:border-blue-200">2. 유형자산의 취득</td><td>0</td></tr>
+
+                                    <tr class="font-bold bg-gray-50"><td>III. 재무활동으로 인한 현금흐름</td><td class="text-blue-600">6,000,000,000</td></tr>
+                                    <tr><td class="pl-4 border-l-4 border-transparent hover:border-blue-200">1. 단기차입금의 증가</td><td>6,000,000,000</td></tr>
+
+                                    <tr class="font-bold bg-yellow-50 border-t-2 border-yellow-200"><td>IV. 현금의 증가(감소) (I+II+III)</td><td class="text-yellow-700">18,306,803,979</td></tr>
+                                    <tr class="font-bold"><td>V. 기초의 현금</td><td>4,182,334</td></tr>
+                                    <tr class="font-bold text-lg text-blue-900"><td>VI. 기말의 현금</td><td>18,310,986,313</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+                
+                container.appendChild(contentDiv);
+            };
+
+            updateView();
+        }
+
+        // --- 4. Interactivity ---
+
+        function highlightTableCells(datasetIndex, colIndex) {
+            // Remove previous highlights
+            document.querySelectorAll('.highlight-cell').forEach(el => el.classList.remove('highlight-cell'));
+            document.querySelectorAll('.highlight-row').forEach(el => el.classList.remove('highlight-row'));
+
+            // Find Table
+            const table = document.getElementById('detail-table');
+            if(!table) return;
+
+            // 1. Highlight Column
+            const th = table.querySelector(`th.col-${colIndex}`);
+            if(th) th.classList.add('highlight-cell');
+
+            table.querySelectorAll(`td.col-${colIndex}`).forEach(td => {
+                td.classList.add('highlight-cell');
+            });
+
+            // 2. Highlight Row
+            const tr = document.getElementById(`row-${datasetIndex}`);
+            if(tr) tr.classList.add('highlight-row');
+        }
+
+        // --- Init ---
+        renderHome();
+
+    </script>
+</body>
+</html>
