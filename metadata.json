@@ -1,0 +1,5 @@
+{
+  "name": "ceo",
+  "description": "A comprehensive CEO dashboard inspired by SAP Fiori, providing key business insights through interactive charts and tables. It covers purchase/production, sales, financials, and stock performance.",
+  "requestFramePermissions": []
+}
